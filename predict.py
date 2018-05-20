@@ -62,11 +62,13 @@ def predict(model, img, batch, gpu):
     # dataには圧縮画像と分割情報が含まれているので、分離する
     st = time.time()
     # バッチサイズごとに学習済みモデルに入力して画像を生成する
-    x = IMG.imgs2arr(img, gpu=gpu)
+    img = np.array(img[0])
+    x = chainer.links.model.vision.resnet.prepare(img)
+    ch, w, h = x.shape
+    x = np.array(x).reshape((-1, ch, w, h))
     y = model.predictor(x)
     print(y)
     print(y.data)
-    print(y.data.argmax(axis=1))
     print(y.data.argmax(axis=1)[0])
     print('exec time: {0:.2f}[s]'.format(time.time() - st))
     return np.argmax(y.data[0])

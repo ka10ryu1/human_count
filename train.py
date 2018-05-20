@@ -13,6 +13,8 @@ import os
 import json
 import argparse
 
+import numpy as np
+
 import chainer
 import chainer.links as L
 from chainer import training
@@ -25,6 +27,26 @@ from Lib.plot_report_log import PlotReportLog
 import Tools.getfunc as GET
 import Tools.func as F
 from Lib.read_dataset_CV2 import LabeledImageDataset
+
+
+class Transform(chainer.dataset.DatasetMixin):
+    def __init__(self, dataset, prepare, x_dtype=np.float32, y_dtype=np.int8):
+        self._dataset = dataset
+        self._prepare = prepare
+        self._x_dtype = x_dtype
+        self._y_dtype = y_dtype
+        self._len = len(self._dataset)
+
+    def __len__(self):
+        # データセットの数を返します
+        return self._len
+
+    def get_example(self, i):
+        # データセットのインデックスを受け取って、データを返します
+        inputs = self._dataset[i]
+        x, y = inputs
+        x = self._prepare(x)
+        return x.astype(self._x_dtype), y.astype(self._y_dtype)
 
 
 def command():
@@ -75,10 +97,13 @@ def getDataset(folder):
             pass
         elif('train_' in name)and('.txt' in ext)and(train_flg is False):
             train = LabeledImageDataset(os.path.join(folder, l))
+            train = Transform(train, chainer.links.model.vision.resnet.prepare)
+
             train_flg = True
             out_n = int(name.split('_')[1])
         elif('test_' in name)and('.txt' in ext)and(test_flg is False):
             test = LabeledImageDataset(os.path.join(folder, l))
+            test = Transform(test, chainer.links.model.vision.resnet.prepare)
             test_flg = True
             out_n = int(name.split('_')[1])
 
