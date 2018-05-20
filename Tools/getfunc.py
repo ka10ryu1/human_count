@@ -186,13 +186,34 @@ def modelParam(path):
     else:
         layer = 0
 
-    af1 = actfun(d['actfun1'])
-    af2 = actfun(d['actfun2'])
-    ch = d['shape'][0]
-    size = d['shape'][1]
+    try:
+        af1 = actfun(d['actfun1'])
+    except:
+        af1 = None
+
+    try:
+        af2 = actfun(d['actfun2'])
+    except:
+        af2 = None
+
+    try:
+        ch = d['shape'][0]
+    except:
+        ch = 0
+
+    try:
+        size = d['shape'][1]
+    except:
+        size = 0
+
+    try:
+        sr = d['shuffle_rate']
+    except:
+        sr = 0
+
     return \
         net, d['unit'], ch, size, \
-        layer, d['shuffle_rate'], af1, af2
+        layer, sr, af1, af2
 
 
 def imgData(folder):

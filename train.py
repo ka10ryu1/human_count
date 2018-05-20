@@ -17,7 +17,7 @@ import chainer
 import chainer.links as L
 from chainer import training
 from chainer.training import extensions
-
+from chainer.iterators import MultiprocessIterator
 
 from Lib.network import KB
 from Lib.plot_report_log import PlotReportLog
@@ -31,12 +31,6 @@ def command():
     parser = argparse.ArgumentParser(description=help)
     parser.add_argument('-i', '--in_path', default='./result/',
                         help='入力データセットのフォルダ [default: ./result/]')
-    parser.add_argument('-u', '--unit', type=int, default=2,
-                        help='ネットワークのユニット数 [default: 2]')
-    parser.add_argument('-a', '--actfun', default='relu',
-                        help='活性化関数 [default: relu, other: elu/c_relu/l_relu/sigmoid/h_sigmoid/tanh/s_plus]')
-    parser.add_argument('-d', '--dropout', type=float, default=0.0,
-                        help='ドロップアウト率（0〜0.9、0で不使用）[default: 0.0]')
     parser.add_argument('-opt', '--optimizer', default='adam',
                         help='オプティマイザ [default: adam, other: ada_d/ada_g/m_sgd/n_ag/rmsp/rmsp_g/sgd/smorms]')
     parser.add_argument('-lf', '--lossfun', default='mse',
@@ -97,27 +91,33 @@ def main(args):
     exec_time = GET.datetimeSHA()
     # Load dataset
     train, test, out_n = getDataset(args.in_path)
-    # 活性化関数を取得する
-    actfun = GET.actfun(args.actfun)
     # モデルを決定する
-    model = L.Classifier(
-        KB(n_unit=args.unit, n_out=out_n, actfun=actfun, dropout=args.dropout, view=args.only_check),
-        # lossfun=GET.lossfun(args.lossfun)
-    )
+    model = L.Classifier(KB(n_out=out_n, view=args.only_check))
+
     if args.gpu_id >= 0:
         # Make a specified GPU current
         chainer.backends.cuda.get_device_from_id(args.gpu_id).use()
         model.to_gpu()  # Copy the model to the GPU
         chainer.global_config.autotune = True
-    else:
-        model.to_intel64()
+    # else:
+    #     model.to_intel64()
 
     # Setup an optimizer
     optimizer = GET.optimizer(args.optimizer).setup(model)
+
+    for func_name in model.predictor.base._children:
+        for param in model.predictor.base[func_name].params():
+            param.update_rule.hyperparam.alpha *= 0.1
+
     # Setup iterator
-    train_iter = chainer.iterators.SerialIterator(train, args.batchsize)
-    test_iter = chainer.iterators.SerialIterator(test, args.batchsize,
-                                                 repeat=False, shuffle=False)
+    train_iter = MultiprocessIterator(train, args.batchsize)
+    test_iter = MultiprocessIterator(test, args.batchsize,
+                                     repeat=False, shuffle=False)
+
+    # train_iter = chainer.iterators.SerialIterator(train, args.batchsize)
+    # test_iter = chainer.iterators.SerialIterator(test, args.batchsize,
+    #                                              repeat=False, shuffle=False)
+
     # Set up a trainer
     updater = training.StandardUpdater(
         train_iter, optimizer, device=args.gpu_id)
@@ -189,10 +189,6 @@ def main(args):
         with open(F.getFilePath(args.out_path, exec_time, '.json'), 'w') as f:
             json.dump(model_param, f, indent=4, sort_keys=True)
 
-    chainer.serializers.save_npz(
-        F.getFilePath(args.out_path, exec_time, '.init_model'),
-        model
-    )
     # Run the training
     trainer.run()
 

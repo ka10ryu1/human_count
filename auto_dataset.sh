@@ -30,19 +30,14 @@ shift $((OPTIND - 1))
 # 以下自由に変更する部分（オプション引数を反映させるなら、$FLG_CHKは必要）
 
 echo -e "\n<< label 00 >>\n"
-./create_dataset.py -ot ../human_delete/Image/other/ -hu ../human_delete/Image/people/ -bg ../human_delete/Image/background/ -hn 0 -o result/00
-
+./create_dataset.py -hn 0 -in 10000 -o result/00
 echo -e "\n<< label 01 >>\n"
-./create_dataset.py -ot ../human_delete/Image/other/ -hu ../human_delete/Image/people/ -bg ../human_delete/Image/background/ -hn 1 -o result/01
-
+./create_dataset.py -hn 1 -in 10000 -o result/01
 echo -e "\n<< label 02 >>\n"
-./create_dataset.py -ot ../human_delete/Image/other/ -hu ../human_delete/Image/people/ -bg ../human_delete/Image/background/ -hn 2 -o result/02
-
+./create_dataset.py -hn 2 -in 10000 -o result/02
 echo -e "\n<< label 03 >>\n"
-./create_dataset.py -ot ../human_delete/Image/other/ -hu ../human_delete/Image/people/ -bg ../human_delete/Image/background/ -hn 3 -o result/03
-
+./create_dataset.py -hn 3 -in 10000 -o result/03
 echo -e "\n<< label 04 >>\n"
-./create_dataset.py -ot ../human_delete/Image/other/ -hu ../human_delete/Image/people/ -bg ../human_delete/Image/background/ -hn 4 -o result/04
-
+./create_dataset.py -hn 4 -in 10000 -o result/04
 echo -e "\n<< label 05 >>\n"
-./create_dataset.py -ot ../human_delete/Image/other/ -hu ../human_delete/Image/people/ -bg ../human_delete/Image/background/ -hn 5 -o result/05
+./create_dataset.py -hn 5 -in 10000 -o result/05
