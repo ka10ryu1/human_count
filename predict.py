@@ -11,12 +11,12 @@ import numpy as np
 
 import chainer
 import chainer.links as L
-from chainer.cuda import to_cpu
+#from chainer.cuda import to_cpu
 
 from Lib.network import KB
 from create_dataset import create
 import Tools.imgfunc as IMG
-import Tools.getfunc as GET
+#import Tools.getfunc as GET
 import Tools.func as F
 
 
