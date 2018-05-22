@@ -11,13 +11,16 @@ import numpy as np
 
 import chainer
 import chainer.links as L
-#from chainer.cuda import to_cpu
+# from chainer.cuda import to_cpu
+import chainer.functions as F
 
+from chainer.links.model.vision import resnet
+
+#import Tools.imgfunc as IMG
+# import Tools.getfunc as GET
+import Tools.func as FNC
 from Lib.network import KB
 from create_dataset import create
-import Tools.imgfunc as IMG
-#import Tools.getfunc as GET
-import Tools.func as F
 
 
 def command():
@@ -38,8 +41,8 @@ def command():
                         help='背景の画像フォルダ (default: ./Image/background/')
     parser.add_argument('-os', '--obj_size', type=int, default=64,
                         help='挿入する画像サイズ [default: 64 pixel]')
-    parser.add_argument('-on', '--obj_num', type=int, default=6,
-                        help='画像を生成する数 [default: 6]')
+    parser.add_argument('-on', '--obj_num', type=int, default=3,
+                        help='画像を生成する数 [default: 3]')
     parser.add_argument('-is', '--img_size', type=int, default=256,
                         help='生成される画像サイズ [default: 256 pixel]')
     parser.add_argument('--batch', '-b', type=int, default=100,
@@ -65,15 +68,13 @@ def predict(model, x, batch, gpu):
     st = time.time()
     # バッチサイズごとに学習済みモデルに入力して画像を生成する
     y = model.predictor(x)
-    print(y)
-    print(y.data)
-    print(y.data.argmax(axis=1)[0])
     print('exec time: {0:.2f}[s]'.format(time.time() - st))
-    return np.argmax(y.data[0])
+    return y  # np.array(y.data.argmax(axis=1), dtype=np.int8)
 
 
 def imgs2resnet(imgs):
-    dst = [chainer.links.model.vision.resnet.prepare(img) for img in imgs]
+    dst = [resnet.prepare(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+           for img in imgs]
     return np.array(dst)
 
 
@@ -81,18 +82,17 @@ def main(args):
     # jsonファイルから学習モデルのパラメータを取得する
     # net, unit, ch, size, layer, sr, af1, af2 = GET.modelParam(args.param)
     # 学習モデルを生成する
-    model = L.Classifier(KB(n_out=6))
+    model = L.Classifier(KB(n_out=5))
 
     # load_npzのpath情報を取得し、学習済みモデルを読み込む
-    load_path = F.checkModelType(args.model)
-    print(args.model)
-    print('AAAA', load_path)
+    load_path = FNC.checkModelType(args.model)
+    print(load_path)
     try:
         chainer.serializers.load_npz(args.model, model, path=load_path)
     except:
         import traceback
         traceback.print_exc()
-        print(F.fileFuncLine())
+        print(FNC.fileFuncLine())
         exit()
 
     # GPUの設定
@@ -104,28 +104,34 @@ def main(args):
 
     # 画像の生成
     x = []
-    y = []
-    num = 50
-    for i in range(6):
+    t = []
+    num = 30
+    for i in range(5):
         x.extend(
             create(args.other_path, args.human_path, args.background_path,
                    args.obj_size, args.img_size, args.obj_num, i, num)
         )
-        y.extend([i]*num)
+        t.extend([i]*num)
 
     x = imgs2resnet(np.array(x))
-    y = np.array(y)
-    print(x.shape, y.shape)
+    t = np.array(t, dtype=np.int8)
+    print(x.shape, t.shape)
 
     # 学習モデルを実行する
     with chainer.using_config('train', False):
-        t = predict(model, x, args.batch, args.gpu)
+        y = predict(model, x, args.batch, args.gpu)
 
-    import chainer.functions as F
-    print(F.classification_summary(y, t))
+    print(t)
+    print(y.data.argmax(axis=1))
+    precision, recall, F_score, _ = F.classification_summary(y, t)
+    print('precision:', precision.data)
+    print('recall:', recall.data)
+    print('F:', F_score.data)
+    exit()
 
     # 生成結果を保存する
-    name = F.getFilePath(args.out_path, 'predict-' + str(num).zfill(2), '.jpg')
+    name = FNC.getFilePath(args.out_path, 'predict-' +
+                           str(num).zfill(2), '.jpg')
     print('save:', name)
     cv2.imwrite(name, x[0])
     cv2.imshow(name, x[0])
@@ -134,5 +140,5 @@ def main(args):
 
 if __name__ == '__main__':
     args = command()
-    F.argsPrint(args)
+    FNC.argsPrint(args)
     main(args)

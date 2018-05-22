@@ -20,8 +20,10 @@ class KB(Chain):
         super(KB, self).__init__()
         with self.init_scope():
             self.base = base
-            self.l1 = L.Linear(None, 128)
-            self.l2 = L.Linear(None, n_out)
+            self.l1 = L.Linear(None, 1024)
+            self.l2 = L.Linear(None, 512)
+            self.l3 = L.Linear(None, 256)
+            self.lN = L.Linear(None, n_out)
 
         self.actfun = actfun
         self.layer = layer
@@ -31,4 +33,6 @@ class KB(Chain):
     def __call__(self, x):
         h = self.base(x, layers=[self.layer])
         h = self.actfun(self.l1(h[self.layer]))
-        return self.l2(h)
+        h = self.actfun(self.l2(h))
+        h = self.actfun(self.l3(h))
+        return self.lN(h)

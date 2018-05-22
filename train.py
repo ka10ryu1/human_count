@@ -132,7 +132,7 @@ def main(args):
 
     for func_name in model.predictor.base._children:
         for param in model.predictor.base[func_name].params():
-            param.update_rule.hyperparam.alpha *= 0.1
+            param.update_rule.hyperparam.alpha *= 0.25
 
     # Setup iterator
     train_iter = MultiprocessIterator(train, args.batchsize)

@@ -30,7 +30,7 @@ class Timer(object):
     def stop(self):
         return time.time() - self._start
 
-    def print(self, add=''):
+    def view(self, add=''):
         print(add+'{0:.3f}[s]'.format(self.stop()))
 
 
@@ -50,8 +50,8 @@ def command():
                         help='切り捨てる数 [default: 1000]')
     parser.add_argument('-in', '--img_num', type=int, default=200,
                         help='画像を生成する数 [default: 200]')
-    parser.add_argument('-on', '--obj_num', type=int, default=4,
-                        help='障害物の最大数 [default: 4]')
+    parser.add_argument('-on', '--obj_num', type=int, default=3,
+                        help='障害物の最大数 [default: 3]')
     parser.add_argument('-hn', '--human_num', type=int, default=2,
                         help='人間の最大数 [default: 2]')
     parser.add_argument('-t', '--train_per_all', type=float, default=0.9,
@@ -197,19 +197,19 @@ def main(args):
                args.background_path,
                args.obj_size, args.img_size,
                args.obj_num, args.human_num, args.img_num)
-    timer.print()
+    timer.view()
 
     print('save images...')
     timer.reset()
     w_path = [F.getFilePath(args.out_path, GET.datetimeSHA(GET.randomStr(10), str_len=12), '.jpg')
               for i in x]
     [cv2.imwrite(w, i) for i, w in zip(x, w_path)]
-    timer.print()
+    timer.view()
 
     print('save param...')
     timer.reset()
     F.dict2json(args.out_path, 'dataset', F.args2dict(args))
-    timer.print()
+    timer.view()
 
 
 if __name__ == '__main__':

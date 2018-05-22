@@ -19,6 +19,8 @@ import Tools.imgfunc as IMG
 #import Tools.getfunc as GET
 import Tools.func as F
 
+from PIL import Image
+
 
 def command():
     parser = argparse.ArgumentParser(description=help)
@@ -36,8 +38,8 @@ def command():
                         help='背景の画像フォルダ (default: ./Image/background/')
     parser.add_argument('-os', '--obj_size', type=int, default=64,
                         help='挿入する画像サイズ [default: 64 pixel]')
-    parser.add_argument('-on', '--obj_num', type=int, default=6,
-                        help='画像を生成する数 [default: 6]')
+    parser.add_argument('-on', '--obj_num', type=int, default=3,
+                        help='画像を生成する数 [default: 3]')
     parser.add_argument('-is', '--img_size', type=int, default=256,
                         help='生成される画像サイズ [default: 256 pixel]')
     parser.add_argument('--batch', '-b', type=int, default=100,
@@ -62,14 +64,14 @@ def predict(model, img, batch, gpu):
     # dataには圧縮画像と分割情報が含まれているので、分離する
     st = time.time()
     # バッチサイズごとに学習済みモデルに入力して画像を生成する
-    img = np.array(img[0])
     x = chainer.links.model.vision.resnet.prepare(img)
     ch, w, h = x.shape
     x = np.array(x).reshape((-1, ch, w, h))
+    print(x.shape)
     y = model.predictor(x)
     print(y)
     print(y.data)
-    print(y.data.argmax(axis=1)[0])
+    print(y.data.argmax(axis=1))
     print('exec time: {0:.2f}[s]'.format(time.time() - st))
     return np.argmax(y.data[0])
 
@@ -78,7 +80,7 @@ def main(args):
     # jsonファイルから学習モデルのパラメータを取得する
     # net, unit, ch, size, layer, sr, af1, af2 = GET.modelParam(args.param)
     # 学習モデルを生成する
-    model = L.Classifier(KB(n_out=6))
+    model = L.Classifier(KB(n_out=5))
 
     # load_npzのpath情報を取得し、学習済みモデルを読み込む
     load_path = F.checkModelType(args.model)
@@ -105,11 +107,18 @@ def main(args):
                    args.human_path,
                    args.background_path,
                    args.obj_size, args.img_size,
-                   args.obj_num, 2, 1)
+                   args.obj_num, 2, 1)[0]
+        print(x.shape)
     elif IMG.isImgPath(args.image):
-        x = cv2.imread(args.image, IMG.getCh(0))
+
+        #x = Image.open(args.image)
+
+        x = cv2.cvtColor(
+            cv2.imread(args.image, IMG.getCh(0)), cv2.COLOR_RGB2BGR
+        )
+
         w, h = x.shape[:2]
-        x = np.array(x).reshape(1, w, h, -1)
+        #x = np.array(x).reshape(1, w, h, -1)
     else:
         print('input image path is not found:', args.image)
         exit()
@@ -121,8 +130,8 @@ def main(args):
     # 生成結果を保存する
     name = F.getFilePath(args.out_path, 'predict-' + str(num).zfill(2), '.jpg')
     print('save:', name)
-    cv2.imwrite(name, x[0])
-    cv2.imshow(name, x[0])
+    cv2.imwrite(name, cv2.cvtColor(np.asarray(x), cv2.COLOR_BGR2RGB))
+    cv2.imshow(name,  cv2.cvtColor(np.asarray(x), cv2.COLOR_BGR2RGB))
     cv2.waitKey()
 
 

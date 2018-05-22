@@ -81,7 +81,7 @@ def isImgPath(path, flg):
 def main(args):
     # 画像データを探索し、画像データのパスと、サブディレクトリの値を格納する
     search = glob(os.path.join(args.img_root_path, '**'), recursive=True)
-    data = [(img, str2int(img.split('/')[-2])) for img in search
+    data = [(img, str2int(img.split('/')[1])) for img in search
             if isImgPath(img, True)]
     # ラベルの数を数える
     label_num = len(np.unique(np.array([i for _, i in data])))
