@@ -54,19 +54,24 @@ def command():
     parser = argparse.ArgumentParser(description=help)
     parser.add_argument('-i', '--in_path', default='./result/',
                         help='入力データセットのフォルダ [default: ./result/]')
+    parser.add_argument('-d', '--dropout', type=float, default=0.2, metavar='FLOAT',
+                        help='ドロップアウト率（0〜0.9、0で不使用）[default: 0.2]')
     parser.add_argument('-opt', '--optimizer', default='adam',
-                        help='オプティマイザ [default: adam, other: ada_d/ada_g/m_sgd/n_ag/rmsp/rmsp_g/sgd/smorms]')
+                        choices=('adam', 'ada_d', 'ada_g', 'm_sgd',
+                                 'n_ag', 'rmsp', 'rmsp_g', 'sgd', 'smorms'),
+                        help='オプティマイザ [default: adam]')
     parser.add_argument('-lf', '--lossfun', default='mse',
-                        help='損失関数 [default: mse, other: mae, ber, gauss_kl]')
-    parser.add_argument('-p', '--pruning', type=float, default=0.7,
-                        help='pruning率（snapshot使用時のみ効果あり） [default: 0.7]')
-    parser.add_argument('-b', '--batchsize', type=int, default=20,
-                        help='ミニバッチサイズ [default: 20]')
-    parser.add_argument('-e', '--epoch', type=int, default=10,
+                        choices=('mse', 'mae', 'ber', 'gauss_kl'),
+                        help='損失関数 [default: mse]')
+    parser.add_argument('-p', '--pruning', type=float, default=0.33, metavar='FLOAT',
+                        help='pruning率（snapshot使用時のみ効果あり） [default: 0.5]')
+    parser.add_argument('-b', '--batchsize', type=int, default=100, metavar='INT',
+                        help='ミニバッチサイズ [default: 100]')
+    parser.add_argument('-e', '--epoch', type=int, default=10, metavar='INT',
                         help='学習のエポック数 [default 10]')
-    parser.add_argument('-f', '--frequency', type=int, default=-1,
+    parser.add_argument('-f', '--frequency', type=int, default=-1, metavar='INT',
                         help='スナップショット周期 [default: -1]')
-    parser.add_argument('-g', '--gpu_id', type=int, default=-1,
+    parser.add_argument('-g', '--gpu_id', type=int, default=-1, metavar='INT',
                         help='使用するGPUのID [default -1]')
     parser.add_argument('-o', '--out_path', default='./result/',
                         help='生成物の保存先[default: ./result/]')
