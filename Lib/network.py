@@ -10,9 +10,8 @@ import chainer.functions as F
 
 
 class KB(Chain):
-    def __init__(self, n_out, actfun=F.relu,
-                 base=L.ResNet50Layers(),
-                 layer='pool5', view=False):
+    def __init__(self, n_out, n_unit=1024, actfun=F.relu, dropout=0.0,
+                 base=L.ResNet50Layers(), layer='pool5'):
         """
         [in] n_out:     出力チャンネル
         """
@@ -20,19 +19,25 @@ class KB(Chain):
         super(KB, self).__init__()
         with self.init_scope():
             self.base = base
-            self.l1 = L.Linear(None, 1024)
-            self.l2 = L.Linear(None, 512)
-            self.l3 = L.Linear(None, 256)
+            self.l1 = L.Linear(None, n_unit)
+            self.l2 = L.Linear(None, n_unit//2)
+            self.l3 = L.Linear(None, n_unit//4)
             self.lN = L.Linear(None, n_out)
 
-        self.actfun = actfun
-        self.layer = layer
-        self.view = view
-        self.timer = 0
+        self._actfun = actfun
+        self._dropout_ratio = dropout
+        self._layer = layer
+
+    def _linear(self, l, h):
+        h = self._actfun(l(h))
+        if self._dropout_ratio > 0:
+            h = F.dropout(h, self._dropout_ratio)
+
+        return h
 
     def __call__(self, x):
-        h = self.base(x, layers=[self.layer])
-        h = self.actfun(self.l1(h[self.layer]))
-        h = self.actfun(self.l2(h))
-        h = self.actfun(self.l3(h))
+        h = self.base(x, layers=[self._layer])
+        h = self._linear(self.l1, h[self._layer])
+        h = self._linear(self.l2, h)
+        h = self._linear(self.l3, h)
         return self.lN(h)
