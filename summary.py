@@ -9,6 +9,11 @@ import time
 import argparse
 import numpy as np
 
+try:
+    import cupy
+except ImportError:
+    logger.warning('not import cupy')
+
 import chainer
 import chainer.links as L
 # from chainer.cuda import to_cpu
@@ -16,7 +21,7 @@ import chainer.functions as F
 
 from chainer.links.model.vision import resnet
 
-#import Tools.imgfunc as IMG
+# import Tools.imgfunc as IMG
 # import Tools.getfunc as GET
 import Tools.func as FNC
 from Lib.network import KB
@@ -54,28 +59,10 @@ def command():
     return parser.parse_args()
 
 
-def predict(model, x, batch, gpu):
-    """
-    推論実行メイン部
-    [in]  model:     推論実行に使用するモデル
-    [in]  img:       入力画像
-    [in]  batch:     バッチサイズ
-    [in]  gpu:       GPU ID
-    [out] img:       推論実行で得られた生成画像
-    """
-
-    # dataには圧縮画像と分割情報が含まれているので、分離する
-    st = time.time()
-    # バッチサイズごとに学習済みモデルに入力して画像を生成する
-    y = model.predictor(x)
-    print('exec time: {0:.2f}[s]'.format(time.time() - st))
-    return y  # np.array(y.data.argmax(axis=1), dtype=np.int8)
-
-
-def imgs2resnet(imgs):
+def imgs2resnet(imgs, xp=np):
     dst = [resnet.prepare(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
            for img in imgs]
-    return np.array(dst)
+    return xp.array(dst)
 
 
 def main(args):
@@ -99,7 +86,9 @@ def main(args):
     if args.gpu >= 0:
         chainer.cuda.get_device_from_id(args.gpu).use()
         model.to_gpu()
-    # else:
+        xp = cupy
+    else:
+        xp = np
     #     model.to_intel64()
 
     # 画像の生成
@@ -113,20 +102,25 @@ def main(args):
         )
         t.extend([i]*num)
 
-    x = imgs2resnet(np.array(x))
-    t = np.array(t, dtype=np.int8)
+    x = imgs2resnet(np.array(x), xp)
+    t = xp.array(t, dtype=np.int8)
     print(x.shape, t.shape)
 
     # 学習モデルを実行する
     with chainer.using_config('train', False):
-        y = predict(model, x, args.batch, args.gpu)
+        st = time.time()
+        y = model.predictor(x)
+        print('exec time: {0:.2f}[s]'.format(time.time() - st))
 
-    print(t)
-    print(y.data.argmax(axis=1))
-    precision, recall, F_score, _ = F.classification_summary(y, t)
-    print('precision:', precision.data)
-    print('recall:', recall.data)
-    print('F:', F_score.data)
+    # print(t)
+    # print(y.data.argmax(axis=1))
+    p, r, f, _ = F.classification_summary(y, t)
+    precision = p.data.tolist()
+    recall = r.data.tolist()
+    F_score = f.data.tolist()
+    print('num|precision|recall|F')
+    [print('{0:3}|   {1:6.4f}|{2:6.4f}|{3:6.4f}'.format(i, elem[0], elem[1], elem[2]))
+     for i, elem in enumerate(zip(precision, recall, F_score))]
     exit()
 
     # 生成結果を保存する
