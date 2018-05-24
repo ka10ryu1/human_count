@@ -11,15 +11,13 @@ import numpy as np
 
 import chainer
 import chainer.links as L
-#from chainer.cuda import to_cpu
+from chainer.links.model.vision import resnet
 
 from Lib.network import KB
 from create_dataset import create
 import Tools.imgfunc as IMG
-#import Tools.getfunc as GET
+# import Tools.getfunc as GET
 import Tools.func as F
-
-from PIL import Image
 
 
 def command():
@@ -51,29 +49,11 @@ def command():
     return parser.parse_args()
 
 
-def predict(model, img, batch, gpu):
-    """
-    推論実行メイン部
-    [in]  model:     推論実行に使用するモデル
-    [in]  img:       入力画像
-    [in]  batch:     バッチサイズ
-    [in]  gpu:       GPU ID
-    [out] img:       推論実行で得られた生成画像
-    """
+def img2resnet(img, xp=np, dtype=np.float32):
+    dst = resnet.prepare(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
 
-    # dataには圧縮画像と分割情報が含まれているので、分離する
-    st = time.time()
-    # バッチサイズごとに学習済みモデルに入力して画像を生成する
-    x = chainer.links.model.vision.resnet.prepare(img)
-    ch, w, h = x.shape
-    x = np.array(x).reshape((-1, ch, w, h))
-    print(x.shape)
-    y = model.predictor(x)
-    print(y)
-    print(y.data)
-    print(y.data.argmax(axis=1))
-    print('exec time: {0:.2f}[s]'.format(time.time() - st))
-    return np.argmax(y.data[0])
+    ch, w, h = dst.shape
+    return xp.array(dst, dtype=dtype).reshape(-1, ch, w, h)
 
 
 def main(args):
@@ -111,27 +91,31 @@ def main(args):
         print(x.shape)
     elif IMG.isImgPath(args.image):
 
-        #x = Image.open(args.image)
+        # x = Image.open(args.image)
 
         x = cv2.cvtColor(
             cv2.imread(args.image, IMG.getCh(0)), cv2.COLOR_RGB2BGR
         )
 
         w, h = x.shape[:2]
-        #x = np.array(x).reshape(1, w, h, -1)
+        # x = np.array(x).reshape(1, w, h, -1)
     else:
         print('input image path is not found:', args.image)
         exit()
 
+    t = img2resnet(np.array(x))
     # 学習モデルを実行する
     with chainer.using_config('train', False):
-        num = predict(model, x, args.batch, args.gpu)
+        st = time.time()
+        y = model.predictor(t)
+        num = y[0].data.argmax()
+        print('exec time: {0:.2f}[s]'.format(time.time() - st))
 
     # 生成結果を保存する
     name = F.getFilePath(args.out_path, 'predict-' + str(num).zfill(2), '.jpg')
     print('save:', name)
-    cv2.imwrite(name, cv2.cvtColor(np.asarray(x), cv2.COLOR_BGR2RGB))
-    cv2.imshow(name,  cv2.cvtColor(np.asarray(x), cv2.COLOR_BGR2RGB))
+    cv2.imwrite(name, x)
+    cv2.imshow(name,  x)
     cv2.waitKey()
 
 
