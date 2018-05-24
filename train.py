@@ -54,8 +54,16 @@ def command():
     parser = argparse.ArgumentParser(description=help)
     parser.add_argument('-i', '--in_path', default='./result/',
                         help='入力データセットのフォルダ [default: ./result/]')
+    parser.add_argument('-u', '--n_unit', type=int, default=1024, metavar='INT',
+                        help='中間層の数[default: 1024]')
     parser.add_argument('-d', '--dropout', type=float, default=0.2, metavar='FLOAT',
                         help='ドロップアウト率（0〜0.9、0で不使用）[default: 0.2]')
+    parser.add_argument('-act', '--actfun', default='relu',
+                        choices=('relu', 'elu', 'c_relu', 'l_relu',
+                                 'sigmoid', 'h_sigmoid', 'tanh', 's_plus'),
+                        help='活性化関数(1) [default: relu]')
+    parser.add_argument('-alp', '--alpha', type=float, default=0.15, metavar='FLOAT',
+                        help='resnetの学習率[default: 0.15]')
     parser.add_argument('-opt', '--optimizer', default='adam',
                         choices=('adam', 'ada_d', 'ada_g', 'm_sgd',
                                  'n_ag', 'rmsp', 'rmsp_g', 'sgd', 'smorms'),
@@ -97,7 +105,7 @@ def getDataset(folder):
     # 学習用データとテスト用データを発見したらTrueにする
     train_flg = False
     test_flg = False
-    out_n = 0
+    n_out = 0
 
     for l in os.listdir(folder):
         name, ext = os.path.splitext(os.path.basename(l))
@@ -106,16 +114,15 @@ def getDataset(folder):
         elif('train_' in name)and('.txt' in ext)and(train_flg is False):
             train = LabeledImageDataset(os.path.join(folder, l))
             train = Transform(train, chainer.links.model.vision.resnet.prepare)
-
             train_flg = True
-            out_n = int(name.split('_')[1])
+            n_out = int(name.split('_')[1])
         elif('test_' in name)and('.txt' in ext)and(test_flg is False):
             test = LabeledImageDataset(os.path.join(folder, l))
             test = Transform(test, chainer.links.model.vision.resnet.prepare)
             test_flg = True
-            out_n = int(name.split('_')[1])
+            n_out = int(name.split('_')[1])
 
-    return train, test, out_n
+    return train, test, n_out
 
 
 def main(args):
@@ -123,9 +130,10 @@ def main(args):
     # 各種データをユニークな名前で保存するために時刻情報を取得する
     exec_time = GET.datetimeSHA()
     # Load dataset
-    train, test, out_n = getDataset(args.in_path)
+    train, test, n_out = getDataset(args.in_path)
     # モデルを決定する
-    model = L.Classifier(KB(n_out=out_n, view=args.only_check))
+    actfun = GET.actfun(args.actfun)
+    model = L.Classifier(KB(n_out, args.n_unit, actfun, args.dropout))
 
     if args.gpu_id >= 0:
         # Make a specified GPU current
@@ -140,7 +148,7 @@ def main(args):
 
     for func_name in model.predictor.base._children:
         for param in model.predictor.base[func_name].params():
-            param.update_rule.hyperparam.alpha *= 0.25
+            param.update_rule.hyperparam.alpha *= args.alpha
 
     # Setup iterator
     train_iter = MultiprocessIterator(train, args.batchsize)
