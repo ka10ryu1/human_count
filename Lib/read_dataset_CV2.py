@@ -31,7 +31,7 @@ from chainer.dataset import dataset_mixin
 
 
 def _read_image_as_array(path, dtype):
-    f = cv2.imread(path)
+    f = cv2.imread(path, cv2.IMREAD_COLOR)
     f = Image.fromarray(cv2.cvtColor(f, cv2.COLOR_BGR2RGB))
     try:
         image = numpy.asarray(f, dtype=dtype)
