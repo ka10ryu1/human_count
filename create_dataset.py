@@ -46,16 +46,12 @@ def command():
                         help='挿入する画像サイズ [default: 64 pixel]')
     parser.add_argument('-is', '--img_size', type=int, default=256,
                         help='生成される画像サイズ [default: 256 pixel]')
-    parser.add_argument('-r', '--round', type=int, default=1000,
-                        help='切り捨てる数 [default: 1000]')
     parser.add_argument('-in', '--img_num', type=int, default=200,
                         help='画像を生成する数 [default: 200]')
     parser.add_argument('-on', '--obj_num', type=int, default=3,
                         help='障害物の最大数 [default: 3]')
     parser.add_argument('-hn', '--human_num', type=int, default=2,
                         help='人間の最大数 [default: 2]')
-    parser.add_argument('-t', '--train_per_all', type=float, default=0.9,
-                        help='画像数に対する学習用画像の割合 [default: 0.9]')
     parser.add_argument('-o', '--out_path', default='./result/',
                         help='・ (default: ./result/)')
     args = parser.parse_args()
