@@ -151,6 +151,27 @@ def optimizer(opt_str):
     return opt
 
 
+def jsonData(path, data):
+    logger.debug('json read: {}'.format(path))
+    try:
+        with open(path, 'r') as f:
+            j_dict = json.load(f)
+
+    except:
+        import traceback
+        traceback.print_exc()
+        logger.error(fileFuncLine())
+        exit(1)
+
+    param = [j_dict[d] for d in data if d in j_dict]
+    if len(param) == 0:
+        logger.error('json read miss: {}'.format(data))
+    elif len(param) == 1:
+        return param[0]
+    else:
+        return param
+
+
 def modelParam(path):
     """
     jsonで記述されたモデルパラメータ情報を読み込む

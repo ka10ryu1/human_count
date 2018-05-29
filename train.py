@@ -228,7 +228,9 @@ def main(args):
         trainer.extend(pruning.pruned(model, masks))
 
     # predict.pyでモデルを決定する際に必要なので記憶しておく
-    model_param = {i: getattr(args, i) for i in dir(args) if not '_' in i[0]}
+    model_param = F.args2dict(args)
+    model_param['shape'] = train[0][0].shape
+    model_param['n_out'] = n_out
     if args.only_check is False:
         # predict.pyでモデルのパラメータを読み込むjson形式で保存する
         with open(F.getFilePath(args.out_path, exec_time, '.json'), 'w') as f:
