@@ -24,6 +24,7 @@ from chainer.links.model.vision import resnet
 # import Tools.imgfunc as IMG
 # import Tools.getfunc as GET
 import Tools.func as FNC
+import Tools.getfunc as GET
 from Lib.network import KB
 from create_dataset import create
 
@@ -34,8 +35,6 @@ def command():
                         help='使用する学習済みモデル')
     parser.add_argument('param',
                         help='使用するモデルパラメータ')
-    parser.add_argument('img_path',
-                        help='使用する画像パス')
     parser.add_argument('-i', '--image', default='',
                         help='別途使用したい画像があれば')
     parser.add_argument('-ot', '--other_path', default='./Image/other/',
@@ -50,6 +49,8 @@ def command():
                         help='画像を生成する数 [default: 3]')
     parser.add_argument('-is', '--img_size', type=int, default=256,
                         help='生成される画像サイズ [default: 256 pixel]')
+    parser.add_argument('-in', '--img_num', type=int, default=30,
+                        help='1種類あたりの画像数 [default: 30]')
     parser.add_argument('--batch', '-b', type=int, default=100,
                         help='ミニバッチサイズ [default: 100]')
     parser.add_argument('--gpu', '-g', type=int, default=-1,
@@ -67,13 +68,12 @@ def imgs2resnet(imgs, xp=np):
 
 def main(args):
     # jsonファイルから学習モデルのパラメータを取得する
-    # net, unit, ch, size, layer, sr, af1, af2 = GET.modelParam(args.param)
+    n_out = GET.jsonData(args.param, ['n_out'])
     # 学習モデルを生成する
-    model = L.Classifier(KB(n_out=5))
+    model = L.Classifier(KB(n_out=n_out))
 
     # load_npzのpath情報を取得し、学習済みモデルを読み込む
     load_path = FNC.checkModelType(args.model)
-    print(load_path)
     try:
         chainer.serializers.load_npz(args.model, model, path=load_path)
     except:
@@ -94,13 +94,12 @@ def main(args):
     # 画像の生成
     x = []
     t = []
-    num = 30
-    for i in range(5):
+    for i in range(n_out):
         x.extend(
             create(args.other_path, args.human_path, args.background_path,
-                   args.obj_size, args.img_size, args.obj_num, i, num)
+                   args.obj_size, args.img_size, args.obj_num, i, args.img_num)
         )
-        t.extend([i]*num)
+        t.extend([i]*args.img_num)
 
     x = imgs2resnet(np.array(x), xp)
     t = xp.array(t, dtype=np.int8)
@@ -112,8 +111,6 @@ def main(args):
         y = model.predictor(x)
         print('exec time: {0:.2f}[s]'.format(time.time() - st))
 
-    # print(t)
-    # print(y.data.argmax(axis=1))
     p, r, f, _ = F.classification_summary(y, t)
     precision = p.data.tolist()
     recall = r.data.tolist()
@@ -121,15 +118,6 @@ def main(args):
     print('num|precision|recall|F')
     [print('{0:3}|   {1:6.4f}|{2:6.4f}|{3:6.4f}'.format(i, elem[0], elem[1], elem[2]))
      for i, elem in enumerate(zip(precision, recall, F_score))]
-    exit()
-
-    # 生成結果を保存する
-    name = FNC.getFilePath(args.out_path, 'predict-' +
-                           str(num).zfill(2), '.jpg')
-    print('save:', name)
-    cv2.imwrite(name, x[0])
-    cv2.imshow(name, x[0])
-    cv2.waitKey()
 
 
 if __name__ == '__main__':
