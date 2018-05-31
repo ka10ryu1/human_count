@@ -7,12 +7,12 @@ help = '学習メイン部'
 import logging
 # basicConfig()は、 debug()やinfo()を最初に呼び出す"前"に呼び出すこと
 logging.basicConfig(format='%(message)s')
-logging.getLogger('Tools').setLevel(level=logging.INFO)
+level = logging.INFO
+logging.getLogger('Tools').setLevel(level=level)
 
 import os
 import json
 import argparse
-
 import numpy as np
 
 import chainer
@@ -23,11 +23,10 @@ from chainer.iterators import MultiprocessIterator
 
 from Lib.network import KB
 from Lib.plot_report_log import PlotReportLog
-# import Tools.imgfunc as IMG
+from Lib.read_dataset_CV2 import LabeledImageDataset
 import Tools.getfunc as GET
 import Tools.func as F
 import Tools.pruning as pruning
-from Lib.read_dataset_CV2 import LabeledImageDataset
 
 
 class Transform(chainer.dataset.DatasetMixin):

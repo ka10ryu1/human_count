@@ -16,7 +16,6 @@ from chainer.links.model.vision import resnet
 from Lib.network import KB
 from create_dataset import create
 import Tools.imgfunc as IMG
-# import Tools.getfunc as GET
 import Tools.func as F
 import Tools.getfunc as GET
 
@@ -49,7 +48,9 @@ def command():
                         help='GPU ID [default -1]')
     parser.add_argument('--out_path', '-o', default='./result/',
                         help='生成物の保存先[default: ./result/]')
-    return parser.parse_args()
+    args = parser.parse_args()
+    F.argsPrint(args)
+    return args
 
 
 def img2resnet(img, xp=np, dtype=np.float32):
@@ -121,6 +122,4 @@ def main(args):
 
 
 if __name__ == '__main__':
-    args = command()
-    F.argsPrint(args)
-    main(args)
+    main(command())

@@ -16,13 +16,10 @@ except ImportError:
 
 import chainer
 import chainer.links as L
-# from chainer.cuda import to_cpu
 import chainer.functions as F
 
 from chainer.links.model.vision import resnet
 
-# import Tools.imgfunc as IMG
-# import Tools.getfunc as GET
 import Tools.func as FNC
 import Tools.getfunc as GET
 from Lib.network import KB
@@ -57,7 +54,9 @@ def command():
                         help='GPU ID [default -1]')
     parser.add_argument('--out_path', '-o', default='./result/',
                         help='生成物の保存先[default: ./result/]')
-    return parser.parse_args()
+    args = parser.parse_args()
+    FNC.argsPrint(args)
+    return args
 
 
 def imgs2resnet(imgs, xp=np):
@@ -71,7 +70,6 @@ def main(args):
     n_out = GET.jsonData(args.param, ['n_out'])
     # 学習モデルを生成する
     model = L.Classifier(KB(n_out=n_out))
-
     # load_npzのpath情報を取得し、学習済みモデルを読み込む
     load_path = FNC.checkModelType(args.model)
     try:
@@ -121,6 +119,4 @@ def main(args):
 
 
 if __name__ == '__main__':
-    args = command()
-    FNC.argsPrint(args)
-    main(args)
+    main(command())

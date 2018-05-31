@@ -5,13 +5,11 @@ help = 'データセットテキスト生成部分'
 #
 
 import os
-import time
 import argparse
 import numpy as np
 from glob import glob
 
 import Tools.func as F
-import Tools.imgfunc as IMG
 
 
 def command():
@@ -22,7 +20,9 @@ def command():
                         help='画像数に対する学習用画像の割合 [default: 0.9]')
     parser.add_argument('-o', '--out_path', default='./result/',
                         help='データの保存先 (default: ./result/)')
-    return parser.parse_args()
+    args = parser.parse_args()
+    F.argsPrint(args)
+    return args
 
 
 def writeTXT(folder, name, data):
@@ -50,20 +50,6 @@ def str2int(in_str):
         val = -1
 
     return val
-
-
-class Timer(object):
-    def __init__(self):
-        self._start = 0
-
-    def reset(self):
-        self._start = time.time()
-
-    def stop(self):
-        return time.time() - self._start
-
-    def print(self, add=''):
-        print(add+'{0:.3f}[s]'.format(self.stop()))
 
 
 def isImgPath(path, flg):
@@ -99,6 +85,4 @@ def main(args):
 
 
 if __name__ == '__main__':
-    args = command()
-    F.argsPrint(args)
-    main(args)
+    main(command())
