@@ -1,0 +1,24 @@
+{
+    "actfun": "relu",
+    "alpha": 0.15,
+    "batchsize": 20,
+    "dropout": 0.2,
+    "epoch": 100,
+    "frequency": 10,
+    "gpu_id": 0,
+    "in_path": "./result/",
+    "lossfun": "mse",
+    "n_out": 5,
+    "n_unit": 1024,
+    "only_check": false,
+    "optimizer": "adam",
+    "out_path": "result/H",
+    "plot": true,
+    "pruning": 0.7,
+    "resume": "result/G/82de7524_90.snapshot",
+    "shape": [
+        3,
+        224,
+        224
+    ]
+}
