@@ -93,7 +93,7 @@ def main(args):
         xp = cupy
     else:
         xp = np
-    #     model.to_intel64()
+        # model.to_intel64()
 
     # 画像の生成
     x = []
@@ -115,6 +115,12 @@ def main(args):
         y = model.predictor(x)
         print('exec time: {0:.2f}[s]'.format(time.time() - st))
 
+    # 適合率（precisiton）と再現率（recall）とF値を検証する
+    # precision: 正解の人数を答えたうち、本当に正解の人数だった確率
+    #            （正解が一人の場合に）別の人数を回答すると下がる
+    # recall:    正解の人数に対して、本当に正解の人数を答えられた確率
+    #            （正解が一人でない場合に）一人だと回答すると下がる
+    # F score:   2/((1/recall)+(1/precision))
     print('t:', t)
     print('y:', y.data.argmax(axis=1))
     p, r, f, _ = F.classification_summary(y, t)

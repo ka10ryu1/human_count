@@ -55,7 +55,6 @@ def command():
 
 def img2resnet(img, xp=np, dtype=np.float32):
     dst = resnet.prepare(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-
     ch, w, h = dst.shape
     return xp.array(dst, dtype=dtype).reshape(-1, ch, w, h)
 
@@ -69,7 +68,6 @@ def main(args):
     model = L.Classifier(
         CNT(n_out, n_unit, GET.actfun(actfun), base=L.ResNet50Layers(None))
     )
-
     # load_npzのpath情報を取得し、学習済みモデルを読み込む
     load_path = F.checkModelType(args.model)
     try:

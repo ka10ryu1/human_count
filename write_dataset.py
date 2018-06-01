@@ -42,6 +42,11 @@ def writeTXT(folder, name, data):
 
 
 def str2int(in_str):
+    """
+    入力された数値がintに変換できる場合はintを返す
+    intで返せない場合はエラーを出力する
+    """
+
     val = 0
     try:
         val = int(in_str)
@@ -54,7 +59,6 @@ def str2int(in_str):
 
 def isImgPath(path, flg):
     import imghdr
-
     if not os.path.isfile(path):
         return False
 

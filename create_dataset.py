@@ -22,6 +22,13 @@ import Tools.func as F
 
 
 class Timer(object):
+    """
+    時間を計測するためのクラス
+    reset: タイマーの時刻をリセット
+    stop:  タイマーの時刻を停止
+    view:  タイマーを表示
+    """
+
     def __init__(self):
         self._start = 0
 
@@ -62,16 +69,18 @@ def command():
 
 def getSomeImg(imgs, num, size, random=True):
     """
-    画像リストから任意の数画像をランダムに取得し、大きさも揃える
-    [in]  imgs:ランダムに取得したい画像リスト
-    [in]  num: 取得する数（1以下の数値で1枚）
-    [in]  size:画像サイズ [pixel]
+    画像リストから任意の数画像を（ランダムに）取得し、大きさも揃える
+    [in]  imgs:   取得したい画像リスト
+    [in]  num:    取得する数（1以下の数値で1枚）
+    [in]  size:   画像サイズ [pixel]
+    [in]  random: imgsからランダムに取得したい場合True
     [out] 取得した画像リスト
     """
 
     label = range(len(imgs))
     # 複数枚取得する
     if(num > 1):
+        # ランダムに選択する
         if random:
             choice_num = np.random.randint(1, num)
         else:
@@ -158,53 +167,58 @@ def create(obj_path, h_path, bg_path,
     [in]  img_num:    対象物の数
     [in]  create_num: 生成する画像の枚数
     [out] 生成された入力画像
-    [out] 生成された正解画像
     """
 
+    # 使用するオブジェクト、人、背景の画像をすべて読み込む
     obj = getImgN(obj_path)
     hum = getImgN(h_path)
     bg = getImgN(bg_path)
     x = []
     for i in range(create_num):
+        # 背景をランダムクロップ
         background = rondom_crop(getImg(bg, -1)[0], img_size)
+        # オブジェクトを任意の枚数取得し、背景に貼り付け
         objects = []
         if(obj_num > 0):
             objects.extend(getSomeImg(obj, obj_num, obj_size))
             for j in objects:
                 background, _ = IMG.paste(j, background)
 
+        # 人を任意の枚数取得し、背景に貼り付け
         human = []
         if(img_num > 0):
             human.extend(getSomeImg(hum, img_num, obj_size, random=False))
             for k in human:
                 background, _ = IMG.paste(k, background)
 
+        # 透過情報を削除して入力画像として格納
         x.append(background[:, :, :3])
 
     return x
 
 
 def main(args):
-
     timer = Timer()
     print('create images...')
     timer.reset()
+    # 入力画像の生成
     x = create(args.other_path,
                args.human_path,
                args.background_path,
                args.obj_size, args.img_size,
-               args.obj_num, args.human_num, args.img_num)
+               args .obj_num, args.human_num, args.img_num)
     timer.view()
-
     print('save images...')
     timer.reset()
+    # 保存するパスを取得
     w_path = [F.getFilePath(args.out_path, GET.datetimeSHA(GET.randomStr(10), str_len=12), '.jpg')
               for i in x]
+    # 画像を保存する
     [cv2.imwrite(w, i) for i, w in zip(x, w_path)]
     timer.view()
-
     print('save param...')
     timer.reset()
+    # 画像の生成に使用したパラメータを保存する
     F.dict2json(args.out_path, 'dataset', F.args2dict(args))
     timer.view()
 
