@@ -4,6 +4,12 @@
 help = 'getfuncのテスト用コード'
 #
 
+import logging
+# basicConfig()は、 debug()やinfo()を最初に呼び出す"前"に呼び出すこと
+logging.basicConfig(format='%(message)s')
+level = logging.INFO
+logging.getLogger('Tools').setLevel(level=level)
+
 import unittest
 
 import Tools.getfunc as GET
