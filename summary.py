@@ -69,13 +69,12 @@ def imgs2resnet(imgs, xp=np):
 
 def main(args):
     # jsonファイルから学習モデルのパラメータを取得する
-    n_out, n_unit, actfun, dropout = GET.jsonData(
-        args.param, ['n_out', 'n_unit', 'actfun', 'dropout']
+    n_out, n_unit, actfun = GET.jsonData(
+        args.param, ['n_out', 'n_unit', 'actfun']
     )
-    af = GET.actfun(actfun)
     # 学習モデルを生成する
     model = L.Classifier(
-        CNT(n_out, n_unit, af, dropout, L.ResNet50Layers(None))
+        CNT(n_out, n_unit, GET.actfun(actfun), base=L.ResNet50Layers(None))
     )
     # load_npzのpath情報を取得し、学習済みモデルを読み込む
     load_path = FNC.checkModelType(args.model)
@@ -116,12 +115,14 @@ def main(args):
         y = model.predictor(x)
         print('exec time: {0:.2f}[s]'.format(time.time() - st))
 
+    print('t:', t)
+    print('y:', y.data.argmax(axis=1))
     p, r, f, _ = F.classification_summary(y, t)
     precision = p.data.tolist()
     recall = r.data.tolist()
     F_score = f.data.tolist()
     print('num|precision|recall|F')
-    [print('{0:3}|   {1:6.4f}|{2:6.4f}|{3:6.4f}'.format(i, elem[0], elem[1], elem[2]))
+    [print('{0:3}|    {1:4.3f}| {2:4.3f}| {3:4.3f}'.format(i, elem[0], elem[1], elem[2]))
      for i, elem in enumerate(zip(precision, recall, F_score))]
 
 

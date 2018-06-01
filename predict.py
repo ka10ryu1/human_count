@@ -62,13 +62,12 @@ def img2resnet(img, xp=np, dtype=np.float32):
 
 def main(args):
     # jsonファイルから学習モデルのパラメータを取得する
-    n_out, n_unit, actfun, dropout = GET.jsonData(
-        args.param, ['n_out', 'n_unit', 'actfun', 'dropout']
+    n_out, n_unit, actfun = GET.jsonData(
+        args.param, ['n_out', 'n_unit', 'actfun']
     )
-    af = GET.actfun(actfun)
     # 学習モデルを生成する
     model = L.Classifier(
-        CNT(n_out, n_unit, af, dropout, L.ResNet50Layers(None))
+        CNT(n_out, n_unit, GET.actfun(actfun), base=L.ResNet50Layers(None))
     )
 
     # load_npzのpath情報を取得し、学習済みモデルを読み込む
