@@ -21,7 +21,7 @@ from chainer import training
 from chainer.training import extensions
 from chainer.iterators import MultiprocessIterator
 
-from Lib.network import KB
+from Lib.network import CNT
 from Lib.plot_report_log import PlotReportLog
 from Lib.read_dataset_CV2 import LabeledImageDataset
 import Tools.getfunc as GET
@@ -132,7 +132,7 @@ def main(args):
     train, test, n_out = getDataset(args.in_path)
     # モデルを決定する
     actfun = GET.actfun(args.actfun)
-    model = L.Classifier(KB(n_out, args.n_unit, actfun, args.dropout))
+    model = L.Classifier(CNT(n_out, args.n_unit, actfun, args.dropout))
 
     if args.gpu_id >= 0:
         # Make a specified GPU current

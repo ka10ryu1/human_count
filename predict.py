@@ -13,7 +13,7 @@ import chainer
 import chainer.links as L
 from chainer.links.model.vision import resnet
 
-from Lib.network import KB
+from Lib.network import CNT
 from create_dataset import create
 import Tools.imgfunc as IMG
 import Tools.func as F
@@ -62,9 +62,14 @@ def img2resnet(img, xp=np, dtype=np.float32):
 
 def main(args):
     # jsonファイルから学習モデルのパラメータを取得する
-    n_out = GET.jsonData(args.param, ['n_out'])
+    n_out, n_unit, actfun, dropout = GET.jsonData(
+        args.param, ['n_out', 'n_unit', 'actfun', 'dropout']
+    )
+    af = GET.actfun(actfun)
     # 学習モデルを生成する
-    model = L.Classifier(KB(n_out=n_out))
+    model = L.Classifier(
+        CNT(n_out, n_unit, af, dropout, L.ResNet50Layers(None))
+    )
 
     # load_npzのpath情報を取得し、学習済みモデルを読み込む
     load_path = F.checkModelType(args.model)

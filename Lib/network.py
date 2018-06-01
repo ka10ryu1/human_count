@@ -9,14 +9,14 @@ import chainer.links as L
 import chainer.functions as F
 
 
-class KB(Chain):
+class CNT(Chain):
     def __init__(self, n_out, n_unit=1024, actfun=F.relu, dropout=0.0,
                  base=L.ResNet50Layers(), layer='pool5'):
         """
         [in] n_out:     出力チャンネル
         """
 
-        super(KB, self).__init__()
+        super(CNT, self).__init__()
         with self.init_scope():
             self.base = base
             self.l1 = L.Linear(None, n_unit)

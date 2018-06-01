@@ -4,6 +4,12 @@
 help = 'モデルとモデルパラメータを利用して推論実行する'
 #
 
+import logging
+# basicConfig()は、 debug()やinfo()を最初に呼び出す"前"に呼び出すこと
+logging.basicConfig(format='%(message)s')
+level = logging.INFO
+logging.getLogger('Tools').setLevel(level=level)
+
 import cv2
 import time
 import argparse
@@ -12,7 +18,7 @@ import numpy as np
 try:
     import cupy
 except ImportError:
-    logger.warning('not import cupy')
+    print('not import cupy')
 
 import chainer
 import chainer.links as L
@@ -22,7 +28,7 @@ from chainer.links.model.vision import resnet
 
 import Tools.func as FNC
 import Tools.getfunc as GET
-from Lib.network import KB
+from Lib.network import CNT
 from create_dataset import create
 
 
@@ -32,8 +38,6 @@ def command():
                         help='使用する学習済みモデル')
     parser.add_argument('param',
                         help='使用するモデルパラメータ')
-    parser.add_argument('-i', '--image', default='',
-                        help='別途使用したい画像があれば')
     parser.add_argument('-ot', '--other_path', default='./Image/other/',
                         help='動物、怪獣の画像フォルダ (default: ./Image/other/')
     parser.add_argument('-hu', '--human_path', default='./Image/people/',
@@ -46,10 +50,8 @@ def command():
                         help='画像を生成する数 [default: 3]')
     parser.add_argument('-is', '--img_size', type=int, default=256,
                         help='生成される画像サイズ [default: 256 pixel]')
-    parser.add_argument('-in', '--img_num', type=int, default=30,
-                        help='1種類あたりの画像数 [default: 30]')
-    parser.add_argument('--batch', '-b', type=int, default=100,
-                        help='ミニバッチサイズ [default: 100]')
+    parser.add_argument('-in', '--img_num', type=int, default=20,
+                        help='1種類あたりの画像数 [default: 20]')
     parser.add_argument('--gpu', '-g', type=int, default=-1,
                         help='GPU ID [default -1]')
     parser.add_argument('--out_path', '-o', default='./result/',
@@ -67,9 +69,14 @@ def imgs2resnet(imgs, xp=np):
 
 def main(args):
     # jsonファイルから学習モデルのパラメータを取得する
-    n_out = GET.jsonData(args.param, ['n_out'])
+    n_out, n_unit, actfun, dropout = GET.jsonData(
+        args.param, ['n_out', 'n_unit', 'actfun', 'dropout']
+    )
+    af = GET.actfun(actfun)
     # 学習モデルを生成する
-    model = L.Classifier(KB(n_out=n_out))
+    model = L.Classifier(
+        CNT(n_out, n_unit, af, dropout, L.ResNet50Layers(None))
+    )
     # load_npzのpath情報を取得し、学習済みモデルを読み込む
     load_path = FNC.checkModelType(args.model)
     try:
