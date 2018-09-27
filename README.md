@@ -127,14 +127,13 @@ $ ./train.py -g 0 --no
 
 以下のコマンドを実行することで、モデルを評価できる。
 具体的には適合率と再現率とF値を計算する。
-なぜかHPCでGPUありだとエラーが発生する（Cupyのバージョン不一致？）
 
 ```console
-$ ./summary.py Model/demo.model Model/param.json
+$ ./summary.py Model/demo.model Model/param.json -g 0
 
 〜省略〜
 
-exec time: 36.66[s]
+exec time: 1.04[s]
 t: [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
  1 1 1 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3 3 3 3 3 3 3
  3 3 3 3 3 3 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4]
